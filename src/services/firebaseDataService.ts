@@ -161,7 +161,7 @@ class FirebaseDataService {
     }
   }
 
-  async saveCityMetrics(metrics: Omit<CityMetrics, 'id' | 'timestamp'>): Promise<boolean> {
+  async saveCityMetrics(metrics: Omit<CityMetrics, 'timestamp'>): Promise<boolean> {
     try {
       if (!db) {
         throw new Error('Firebase not initialized');
@@ -202,18 +202,50 @@ class FirebaseDataService {
       const doc = querySnapshot.docs[0];
       const data = doc.data();
 
-      return {
-        id: doc.id,
-        ...data,
-        timestamp: data.timestamp?.toDate() || new Date()
-      } as CityMetrics;
+      // Create a properly typed CityMetrics object with defaults
+      const metrics: CityMetrics = {
+        cityId: data.cityId || cityId,
+        timestamp: data.timestamp?.toDate() || new Date(),
+        traffic: data.traffic || {
+          averageSpeed: 0,
+          congestionLevel: 0,
+          incidents: 0
+        },
+        infrastructure: data.infrastructure || {
+          activeIssues: 0,
+          maintenanceScheduled: 0,
+          systemHealth: 100
+        },
+        safety: data.safety || {
+          emergencyResponses: 0,
+          averageResponseTime: 0,
+          safetyScore: 100
+        },
+        environment: data.environment || {
+          airQuality: 50,
+          noiseLevel: 30,
+          weatherConditions: 'Clear'
+        },
+        utilities: data.utilities || {
+          powerOutages: 0,
+          waterIssues: 0,
+          internetConnectivity: 100
+        },
+        citizenEngagement: data.citizenEngagement || {
+          activeReports: 0,
+          verifiedReporters: 0,
+          satisfactionScore: 80
+        }
+      };
+
+      return metrics;
     } catch (error) {
       console.error('Error getting latest city metrics:', error);
       return null;
     }
   }
 
-  async createAlert(alert: Omit<AlertNotification, 'id' | 'timestamp'>): Promise<AlertNotification> {
+  async createAlert(alert: Omit<AlertNotification, 'id' | 'createdAt'>): Promise<AlertNotification> {
     try {
       if (!db) {
         throw new Error('Firebase not initialized');
@@ -221,7 +253,7 @@ class FirebaseDataService {
 
       const alertData = {
         ...alert,
-        timestamp: serverTimestamp()
+        createdAt: serverTimestamp()
       };
 
       const docRef = await addDoc(collection(db, COLLECTIONS.ALERTS), alertData);
@@ -229,7 +261,7 @@ class FirebaseDataService {
       return {
         ...alert,
         id: docRef.id,
-        timestamp: new Date()
+        createdAt: new Date()
       };
     } catch (error) {
       console.error('Error creating alert:', error);
@@ -245,8 +277,7 @@ class FirebaseDataService {
 
       let q = query(
         collection(db, COLLECTIONS.ALERTS),
-        where('isActive', '==', true),
-        orderBy('timestamp', 'desc')
+        orderBy('createdAt', 'desc')
       );
 
       if (cityId) {
@@ -261,7 +292,8 @@ class FirebaseDataService {
         alerts.push({
           id: doc.id,
           ...data,
-          timestamp: data.timestamp?.toDate() || new Date()
+          createdAt: data.createdAt?.toDate() || new Date(),
+          expiresAt: data.expiresAt?.toDate()
         } as AlertNotification);
       });
 
@@ -353,8 +385,7 @@ class FirebaseDataService {
       const q = query(
         collection(db, COLLECTIONS.ALERTS),
         where('cityId', '==', cityId),
-        where('isActive', '==', true),
-        orderBy('timestamp', 'desc')
+        orderBy('createdAt', 'desc')
       );
 
       return onSnapshot(q, (querySnapshot) => {
@@ -364,7 +395,8 @@ class FirebaseDataService {
           alerts.push({
             id: doc.id,
             ...data,
-            timestamp: data.timestamp?.toDate() || new Date()
+            createdAt: data.createdAt?.toDate() || new Date(),
+            expiresAt: data.expiresAt?.toDate()
           } as AlertNotification);
         });
         callback(alerts);

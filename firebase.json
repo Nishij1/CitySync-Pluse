@@ -6,7 +6,7 @@
     "indexes": "firestore.indexes.json"
   },
   "hosting": {
-    "public": "yes",
+    "public": "out",
     "ignore": [
       "firebase.json",
       "**/.*",
@@ -22,14 +22,7 @@
   "storage": {
     "rules": "storage.rules"
   },
-  "emulators": {
-    "dataconnect": {
-      "dataDir": "dataconnect/.dataconnect/pgliteData"
-    }
-  },
-  "dataconnect": {
-    "source": "dataconnect"
-  },
+
   "functions": [
     {
       "source": "functions",

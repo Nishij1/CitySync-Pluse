@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({
-  subsets: ["latin"],
+// Use system fonts as fallback for build issues
+const inter = {
   variable: "--font-inter",
-});
+  className: "font-sans"
+};
 
 export const metadata: Metadata = {
   title: "CitySync Plus - Universal Urban Intelligence Platform",

@@ -12,8 +12,13 @@ const nextConfig = {
     }
     return config;
   },
-  // Ensure proper output configuration
-  output: 'standalone',
+  // Configure for static export to Firebase Hosting
+  output: 'export',
+  trailingSlash: true,
+  distDir: 'out',
+  images: {
+    unoptimized: true
+  },
   // Disable middleware for now to avoid manifest issues
   skipMiddlewareUrlNormalize: true,
   skipTrailingSlashRedirect: true,

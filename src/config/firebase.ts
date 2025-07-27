@@ -27,10 +27,12 @@ export const db = getFirestore(app);
 export const storage = getStorage(app);
 export const functions = getFunctions(app);
 
-// Initialize Analytics only in browser environment
+// Initialize Analytics only in browser environment and if measurement ID is provided
 export const analytics = typeof window !== 'undefined' ?
   (async () => {
-    if (await isSupported()) {
+    // Only initialize analytics if we have a measurement ID and analytics is supported
+    const measurementId = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID;
+    if (measurementId && await isSupported()) {
       return getAnalytics(app);
     }
     return null;

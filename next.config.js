@@ -12,16 +12,23 @@ const nextConfig = {
     }
     return config;
   },
-  // Configure for static export to Firebase Hosting
-  output: 'export',
-  trailingSlash: true,
-  distDir: 'out',
-  images: {
-    unoptimized: true
-  },
-  // Disable middleware for now to avoid manifest issues
-  skipMiddlewareUrlNormalize: true,
-  skipTrailingSlashRedirect: true,
+  // Only use static export for production builds
+  ...(process.env.NODE_ENV === 'production' && {
+    output: 'export',
+    trailingSlash: true,
+    distDir: 'out',
+    images: {
+      unoptimized: true
+    },
+    skipMiddlewareUrlNormalize: true,
+    skipTrailingSlashRedirect: true,
+  }),
+  // For development, use standard Next.js configuration
+  ...(process.env.NODE_ENV !== 'production' && {
+    images: {
+      unoptimized: true
+    },
+  }),
 }
 
 module.exports = nextConfig

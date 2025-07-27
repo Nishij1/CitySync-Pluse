@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { Loader } from 'lucide-react';
+import { googleMapsLoader } from '../../lib/googleMapsLoader';
 
 interface GoogleMapComponentProps {
   center: { lat: number; lng: number };
@@ -37,46 +38,42 @@ const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({
 }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<google.maps.Map | null>(null);
-  const markersRef = useRef<google.maps.Marker[]>([]);
+  const markersRef = useRef<any[]>([]);
   const infoWindowRef = useRef<google.maps.InfoWindow | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Load Google Maps API
+  // Load Google Maps API using singleton loader
   useEffect(() => {
+    let isMounted = true;
+
     const loadGoogleMaps = async () => {
       try {
-        // Check if Google Maps is already loaded
-        if (window.google && window.google.maps) {
-          initializeMap();
-          return;
-        }
-
         const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
         if (!apiKey) {
           throw new Error('Google Maps API key not found');
         }
 
-        // Create script element
-        const script = document.createElement('script');
-        script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places,geometry&callback=initGoogleMap`;
-        script.async = true;
-        script.defer = true;
+        console.log('Loading Google Maps API using singleton loader...');
 
-        // Set up global callback
-        (window as any).initGoogleMap = () => {
+        // Use singleton loader to prevent duplicate script loading
+        await googleMapsLoader.load({
+          apiKey,
+          libraries: ['places'],
+          language: 'en',
+          region: 'IN', // India region for better local results
+        });
+
+        if (isMounted) {
+          console.log('Google Maps API loaded successfully');
           initializeMap();
-        };
-
-        script.onerror = () => {
-          setError('Failed to load Google Maps API');
-          setIsLoading(false);
-        };
-
-        document.head.appendChild(script);
+        }
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Unknown error');
-        setIsLoading(false);
+        if (isMounted) {
+          console.error('Failed to load Google Maps:', err);
+          setError(err instanceof Error ? err.message : 'Unknown error');
+          setIsLoading(false);
+        }
       }
     };
 
@@ -84,6 +81,7 @@ const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({
 
     return () => {
       // Cleanup
+      isMounted = false;
       if (infoWindowRef.current) {
         infoWindowRef.current.close();
       }
@@ -164,19 +162,19 @@ const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({
     markersRef.current = [];
 
     // Add new markers
-    incidents.forEach((incident, index) => {
+    incidents.forEach((incident) => {
       const position = {
         lat: incident.coordinates[0],
         lng: incident.coordinates[1]
       };
 
-      const marker = new google.maps.Marker({
+      // Create a simple marker with custom icon
+      const marker = new (google.maps as any).Marker({
         position: position,
         map: mapInstanceRef.current,
         title: incident.type,
-        animation: google.maps.Animation.DROP,
         icon: {
-          path: google.maps.SymbolPath.CIRCLE,
+          path: (google.maps as any).SymbolPath.CIRCLE,
           scale: 8,
           fillColor: getSeverityColor(incident.severity),
           fillOpacity: 0.8,

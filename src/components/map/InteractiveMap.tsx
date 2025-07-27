@@ -24,7 +24,6 @@ import GoogleMapComponent from './GoogleMapComponent';
 import { IncidentAnalytics } from '../analytics/IncidentAnalytics';
 import { IncidentManager } from '../admin/IncidentManager';
 import { firebaseDataService } from '../../services/firebaseDataService';
-import type { IncidentReport } from '../../services/dataService';
 
 interface MapLayer {
   id: string;
@@ -69,7 +68,7 @@ export function InteractiveMap() {
   const [incidentFilter, setIncidentFilter] = useState<'all' | 'high' | 'medium' | 'low'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [showAnalytics, setShowAnalytics] = useState(false);
-  const [incidents, setIncidents] = useState<IncidentReport[]>([]);
+  const [incidents, setIncidents] = useState<any[]>([]);
   const [isLoadingIncidents, setIsLoadingIncidents] = useState(true);
   const [showIncidentManager, setShowIncidentManager] = useState(false);
   const [editingIncident, setEditingIncident] = useState<any | null>(null);
@@ -85,8 +84,9 @@ export function InteractiveMap() {
         // Subscribe to real-time updates for Mumbai (default city)
         unsubscribe = firebaseDataService.subscribeToIncidents(
           'mumbai', // Default to Mumbai
-          (firebaseIncidents: IncidentReport[]) => {
+          (firebaseIncidents: any[]) => {
             console.log('Received incidents from Firebase:', firebaseIncidents.length);
+            console.log('Sample incident structure:', firebaseIncidents[0]);
             setIncidents(firebaseIncidents);
             setIsLoadingIncidents(false);
             setLastUpdate(new Date());
@@ -205,27 +205,103 @@ export function InteractiveMap() {
 
   // Performance optimization: memoize filtered incidents
   // Convert IncidentReport to IncidentData format for components
-  const convertIncidentForDisplay = (incident: IncidentReport) => ({
-    id: incident.id || '0',
-    type: incident.type,
-    location: incident.location.address,
-    coordinates: [incident.location.coordinates.lat, incident.location.coordinates.lng] as [number, number],
-    severity: incident.severity === 'critical' ? 'high' : incident.severity as 'low' | 'medium' | 'high',
-    time: incident.timestamps.reported.toLocaleString(),
-    description: incident.description,
-    status: incident.status,
-    reportedBy: incident.reporter.name || 'Anonymous'
-  });
+  const convertIncidentForDisplay = (incident: any) => {
+    // Handle different data structures that might exist in Firebase
+    let coordinates: [number, number];
+    let location: string;
+    let reportedBy: string;
+    let time: string;
+    let severity: 'low' | 'medium' | 'high';
+
+    // Handle coordinates - check multiple possible structures
+    if (incident.coordinates) {
+      // Direct coordinates object
+      coordinates = [incident.coordinates.lat || 0, incident.coordinates.lng || 0];
+    } else if (incident.location?.coordinates) {
+      // Nested in location object
+      coordinates = [incident.location.coordinates.lat || 0, incident.location.coordinates.lng || 0];
+    } else {
+      // Fallback to Mumbai coordinates
+      coordinates = [19.0760, 72.8777];
+    }
+
+    // Handle location string
+    if (typeof incident.location === 'string') {
+      location = incident.location;
+    } else if (incident.location?.address) {
+      location = incident.location.address;
+    } else if (incident.area) {
+      location = incident.area;
+    } else {
+      location = 'Unknown Location';
+    }
+
+    // Handle reporter
+    if (incident.reportedBy) {
+      reportedBy = incident.reportedBy;
+    } else if (incident.reporter?.name) {
+      reportedBy = incident.reporter.name;
+    } else {
+      reportedBy = 'Anonymous';
+    }
+
+    // Handle time
+    if (incident.timestamps?.reported) {
+      time = incident.timestamps.reported.toLocaleString ?
+        incident.timestamps.reported.toLocaleString() :
+        new Date(incident.timestamps.reported).toLocaleString();
+    } else if (incident.time) {
+      time = incident.time;
+    } else if (incident.createdAt) {
+      time = incident.createdAt.toLocaleString ?
+        incident.createdAt.toLocaleString() :
+        new Date(incident.createdAt).toLocaleString();
+    } else {
+      time = new Date().toLocaleString();
+    }
+
+    // Handle severity
+    if (incident.severity === 'critical') {
+      severity = 'high';
+    } else if (['low', 'medium', 'high'].includes(incident.severity)) {
+      severity = incident.severity;
+    } else {
+      severity = 'medium';
+    }
+
+    return {
+      id: incident.id || '0',
+      type: incident.type || 'other',
+      location,
+      coordinates,
+      severity,
+      time,
+      description: incident.description || 'No description available',
+      status: incident.status || 'reported',
+      reportedBy
+    };
+  };
 
   const memoizedFilteredIncidents = useMemo(() => {
     return incidents
-      .filter((incident: IncidentReport) => {
+      .filter((incident: any) => {
         const severity = incident.severity === 'critical' ? 'high' : incident.severity;
         const matchesFilter = incidentFilter === 'all' || severity === incidentFilter;
+
+        // Handle different location structures for search
+        let locationText = '';
+        if (typeof incident.location === 'string') {
+          locationText = incident.location;
+        } else if (incident.location?.address) {
+          locationText = incident.location.address;
+        } else if (incident.area) {
+          locationText = incident.area;
+        }
+
         const matchesSearch = searchQuery === '' ||
-          incident.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          incident.location.address.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          incident.description.toLowerCase().includes(searchQuery.toLowerCase());
+          (incident.type || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+          locationText.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (incident.description || '').toLowerCase().includes(searchQuery.toLowerCase());
         return matchesFilter && matchesSearch;
       })
       .map(convertIncidentForDisplay);

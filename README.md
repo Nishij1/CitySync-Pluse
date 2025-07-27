@@ -103,6 +103,9 @@ NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
 # Google Maps Configuration
 NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your_google_maps_api_key
 
+# Google Analytics Configuration (Optional)
+# NEXT_PUBLIC_GOOGLE_ANALYTICS_ID=G-XXXXXXXXXX
+
 # Default City Settings
 DEFAULT_CITY_ID=mumbai
 DEFAULT_TIMEZONE=Asia/Kolkata
@@ -287,6 +290,6 @@ For support, email support@citysync.in or join our Slack channel.
 
 ---
 
-**Made with ❤️ for Indian Cities**
+**Made with ❤️ for Apophis**
 
 *CitySync Plus - Connecting Citizens, Empowering Cities*

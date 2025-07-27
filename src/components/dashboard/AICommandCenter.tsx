@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Brain, Mic, Send, Zap, TrendingUp, AlertCircle, Sparkles } from 'lucide-react';
+import { Brain, Mic, MicOff, Send, Zap, TrendingUp, AlertCircle, Sparkles } from 'lucide-react';
 import { aiService, type AIInsight, type AIResponse } from '@/services/aiService';
+import { speechService, type SpeechToTextResult } from '@/services/speechService';
 
 export function AICommandCenter() {
   const [query, setQuery] = useState('');
@@ -10,6 +11,8 @@ export function AICommandCenter() {
   const [aiResponse, setAiResponse] = useState<AIResponse | null>(null);
   const [insights, setInsights] = useState<AIInsight[]>([]);
   const [isListening, setIsListening] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const [speechError, setSpeechError] = useState<string | null>(null);
 
   useEffect(() => {
     // Load initial insights
@@ -49,15 +52,32 @@ export function AICommandCenter() {
     }
   };
 
-  const handleVoiceToggle = () => {
-    setIsListening(!isListening);
-    // TODO: Implement Web Speech API integration
-    if (!isListening) {
-      // Start listening
-      console.log('Starting voice recognition...');
-    } else {
-      // Stop listening
-      console.log('Stopping voice recognition...');
+  const handleVoiceToggle = async () => {
+    if (!speechService.isSupported()) {
+      setSpeechError('Speech recognition is not supported in this browser');
+      return;
+    }
+
+    if (isListening) {
+      return; // Prevent multiple clicks while processing
+    }
+
+    setSpeechError(null);
+    setIsListening(true);
+
+    try {
+      const result = await speechService.recognizeSpeech();
+
+      if (result.text.trim()) {
+        setQuery(result.text.trim());
+      } else {
+        setSpeechError('No speech detected. Please try again.');
+      }
+    } catch (error) {
+      console.error('Speech recognition error:', error);
+      setSpeechError(error instanceof Error ? error.message : 'Failed to recognize speech');
+    } finally {
+      setIsListening(false);
     }
   };
 
@@ -112,9 +132,30 @@ export function AICommandCenter() {
               <div className="absolute right-2 top-2 flex space-x-2">
                 <button
                   type="button"
-                  className="p-2 text-gray-500 hover:text-gray-700 transition-colors"
+                  onClick={handleVoiceToggle}
+                  disabled={isTranscribing}
+                  className={`p-2 transition-colors ${
+                    isListening
+                      ? 'text-red-600 hover:text-red-700 bg-red-50'
+                      : isTranscribing
+                      ? 'text-blue-600 bg-blue-50'
+                      : 'text-gray-500 hover:text-gray-700'
+                  } ${isTranscribing ? 'cursor-not-allowed' : ''}`}
+                  title={
+                    isListening
+                      ? 'Stop recording'
+                      : isTranscribing
+                      ? 'Processing speech...'
+                      : 'Start voice input'
+                  }
                 >
-                  <Mic className="h-5 w-5" />
+                  {isTranscribing ? (
+                    <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                  ) : isListening ? (
+                    <MicOff className="h-5 w-5" />
+                  ) : (
+                    <Mic className="h-5 w-5" />
+                  )}
                 </button>
                 <button
                   type="submit"
@@ -125,10 +166,35 @@ export function AICommandCenter() {
                 </button>
               </div>
             </div>
+            {/* Status Messages */}
             {isProcessing && (
               <div className="flex items-center space-x-2 text-purple-600">
                 <div className="w-4 h-4 border-2 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
                 <span>AI is analyzing your query...</span>
+              </div>
+            )}
+            {isListening && (
+              <div className="flex items-center space-x-2 text-red-600">
+                <div className="w-4 h-4 bg-red-600 rounded-full animate-pulse"></div>
+                <span>Listening... Click the microphone again to stop</span>
+              </div>
+            )}
+            {isTranscribing && (
+              <div className="flex items-center space-x-2 text-blue-600">
+                <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                <span>Converting speech to text...</span>
+              </div>
+            )}
+            {speechError && (
+              <div className="flex items-center space-x-2 text-red-600">
+                <AlertCircle className="h-4 w-4" />
+                <span>{speechError}</span>
+                <button
+                  onClick={() => setSpeechError(null)}
+                  className="text-red-400 hover:text-red-600 ml-2"
+                >
+                  ×
+                </button>
               </div>
             )}
           </form>

@@ -10,6 +10,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@elevenlabs/elevenlabs-js": "^2.7.0",
     "@googlemaps/react-wrapper": "^1.2.0",
     "firebase": "^12.0.0",
     "lucide-react": "0.263.1",

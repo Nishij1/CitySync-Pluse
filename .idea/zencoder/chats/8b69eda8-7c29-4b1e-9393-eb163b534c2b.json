@@ -1,0 +1,80 @@
+{
+    "checksum": "2336df02f3e2fbf18bb0ae0d77081608ec74337fde3c3171b278f7f8678822a6",
+    "data": {
+    "id": "8b69eda8-7c29-4b1e-9393-eb163b534c2b",
+    "createdAt": 1753590604215,
+    "updatedAt": 1753590604828,
+    "title": "In the charbot use AIzaSyCGT4aHNlF-FHheuhh2EG-c...",
+    "messages": [
+        {
+            "id": "49d836a1-07f7-43ec-bb8e-151c23000425",
+            "role": "user",
+            "content": [
+                {
+                    "type": "text",
+                    "text": "In the charbot use AIzaSyCGT4aHNlF-FHheuhh2EG-cnSrg4MhDq9s this key insetad and the model is gemini-2.0-flash"
+                }
+            ],
+            "context": {
+                "codebaseEnabled": true,
+                "ragFiles": [
+                    {
+                        "path": "src/components/map/InteractiveMap.tsx",
+                        "fsPath": "C:\\Users\\HP\\Desktop\\My Folder\\Agentic Ai\\src\\components\\map\\InteractiveMap.tsx",
+                        "sources": [
+                            "keyword_search"
+                        ]
+                    },
+                    {
+                        "path": "src/components/auth/UserDashboard.tsx",
+                        "fsPath": "C:\\Users\\HP\\Desktop\\My Folder\\Agentic Ai\\src\\components\\auth\\UserDashboard.tsx",
+                        "sources": [
+                            "keyword_search"
+                        ]
+                    }
+                ],
+                "rerankedFiles": [],
+                "usedFilePaths": []
+            },
+            "createdAt": 1753590604218,
+            "isInternal": false,
+            "rawContent": {
+                "type": "doc",
+                "content": [
+                    {
+                        "type": "paragraph",
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": "In the charbot use AIzaSyCGT4aHNlF-FHheuhh2EG-cnSrg4MhDq9s this key insetad and the model is gemini-2.0-flash"
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "id": "464ac19b-f9ea-4a94-b527-fe4ce0acf532",
+            "role": "system",
+            "content": [
+                {
+                    "type": "errorText",
+                    "text": "Rate limit exceeded. You can try again on July 27 at 12:51.",
+                    "allowRegenerate": true,
+                    "actions": [
+                        {
+                            "type": "upgradePlan",
+                            "waitSeconds": 10306
+                        }
+                    ]
+                }
+            ],
+            "createdAt": 1753590604827,
+            "isInternal": false
+        }
+    ],
+    "isAgent": true,
+    "isCustomAgent": false,
+    "isUnitTestsAgent": false
+}
+}

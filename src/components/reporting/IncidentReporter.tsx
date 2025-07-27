@@ -1,19 +1,21 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { 
-  Camera, 
-  Mic, 
-  MapPin, 
-  Send, 
-  Upload, 
-  X, 
+import {
+  Camera,
+  Mic,
+  MicOff,
+  MapPin,
+  Send,
+  Upload,
+  X,
   CheckCircle,
   AlertTriangle,
   Loader2
 } from 'lucide-react';
 import { dataService, type IncidentReport } from '@/services/dataService';
 import { currentCityConfig } from '@/config/cityConfig';
+import { speechService, type SpeechToTextResult } from '@/services/speechService';
 
 interface IncidentReporterProps {
   onReportSubmitted?: (report: IncidentReport) => void;
@@ -31,6 +33,9 @@ export function IncidentReporter({ onReportSubmitted }: IncidentReporterProps) {
   });
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [isRecording, setIsRecording] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const [speechError, setSpeechError] = useState<string | null>(null);
+  const [voiceNote, setVoiceNote] = useState<string>('');
   const [currentLocation, setCurrentLocation] = useState<{lat: number, lng: number} | null>(null);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -80,13 +85,51 @@ export function IncidentReporter({ onReportSubmitted }: IncidentReporterProps) {
     setSelectedImages(prev => prev.filter((_, i) => i !== index));
   };
 
-  const handleVoiceRecord = () => {
-    setIsRecording(!isRecording);
-    // TODO: Implement voice recording functionality
+  const handleVoiceRecord = async () => {
+    if (!speechService.isSupported()) {
+      setSpeechError('Speech recognition is not supported in this browser');
+      return;
+    }
+
+    setSpeechError(null);
+
     if (!isRecording) {
-      console.log('Starting voice recording...');
+      // Start recording
+      try {
+        setIsRecording(true);
+        const result = await speechService.startContinuousRecognition();
+
+        // This will resolve when the user stops recording
+        if (result.text.trim()) {
+          const transcribedText = result.text.trim();
+          setVoiceNote(transcribedText);
+
+          // If description is empty, use the voice note as description
+          if (!formData.description.trim()) {
+            setFormData(prev => ({
+              ...prev,
+              description: transcribedText
+            }));
+          } else {
+            // Append to existing description
+            setFormData(prev => ({
+              ...prev,
+              description: prev.description + '\n\nVoice Note: ' + transcribedText
+            }));
+          }
+        } else {
+          setSpeechError('No speech detected. Please try again.');
+        }
+      } catch (error) {
+        console.error('Speech recognition error:', error);
+        setSpeechError(error instanceof Error ? error.message : 'Failed to recognize speech');
+      } finally {
+        setIsRecording(false);
+      }
     } else {
-      console.log('Stopping voice recording...');
+      // Stop recording
+      setIsRecording(false);
+      speechService.stopRecognition();
     }
   };
 
@@ -291,9 +334,23 @@ export function IncidentReporter({ onReportSubmitted }: IncidentReporterProps) {
                   ? 'bg-red-600 border-red-500 text-white'
                   : 'bg-gray-50 border-gray-300 text-gray-700 hover:bg-gray-100'
               }`}
+              title={
+                isRecording
+                  ? 'Stop recording'
+                  : 'Record voice note'
+              }
             >
-              <Mic className="h-5 w-5 mr-2" />
-              {isRecording ? 'Recording...' : 'Voice Note'}
+              {isRecording ? (
+                <>
+                  <MicOff className="h-5 w-5 mr-2" />
+                  Stop Recording
+                </>
+              ) : (
+                <>
+                  <Mic className="h-5 w-5 mr-2" />
+                  Voice Note
+                </>
+              )}
             </button>
           </div>
 
@@ -325,6 +382,54 @@ export function IncidentReporter({ onReportSubmitted }: IncidentReporterProps) {
                   </button>
                 </div>
               ))}
+            </div>
+          )}
+
+          {/* Voice Note Display */}
+          {voiceNote && (
+            <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-blue-800 mb-1">Voice Note:</p>
+                  <p className="text-sm text-blue-700">{voiceNote}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setVoiceNote('')}
+                  className="text-blue-400 hover:text-blue-600 ml-2"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Speech Error Display */}
+          {speechError && (
+            <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <AlertTriangle className="h-4 w-4 text-red-600" />
+                  <p className="text-sm text-red-700">{speechError}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSpeechError(null)}
+                  className="text-red-400 hover:text-red-600"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Recording Status */}
+          {isRecording && (
+            <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <div className="flex items-center space-x-2 text-red-600">
+                <div className="w-3 h-3 bg-red-600 rounded-full animate-pulse"></div>
+                <span className="text-sm font-medium">Recording... Click "Stop Recording" when finished</span>
+              </div>
             </div>
           )}
         </div>

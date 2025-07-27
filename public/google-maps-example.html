@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Maps JavaScript API Example</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: #1f2937;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .content {
+            padding: 20px;
+        }
+        #map {
+            height: 500px;
+            width: 100%;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        button {
+            padding: 10px 20px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+        .info {
+            background: #f3f4f6;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .success { background: #d1fae5; color: #065f46; }
+        .error { background: #fee2e2; color: #991b1b; }
+        .loading { background: #dbeafe; color: #1e40af; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Google Maps JavaScript API Example</h1>
+            <p>Using API Key: AIzaSyDuSaYOV26dBzQpvWg-F6YF7ySmesPahwM</p>
+        </div>
+        
+        <div class="content">
+            <div id="status" class="status loading">Loading Google Maps API...</div>
+            
+            <div class="info">
+                <h3>Features Demonstrated:</h3>
+                <ul>
+                    <li>Basic map initialization</li>
+                    <li>Multiple markers with custom icons</li>
+                    <li>Info windows with custom content</li>
+                    <li>Map controls and interaction</li>
+                    <li>Custom map styling</li>
+                </ul>
+            </div>
+
+            <div class="controls">
+                <button onclick="addRandomMarker()">Add Random Marker</button>
+                <button onclick="clearMarkers()">Clear Markers</button>
+                <button onclick="toggleMapType()">Toggle Map Type</button>
+                <button onclick="centerOnNYC()">Center on NYC</button>
+                <button onclick="fitToMarkers()">Fit to Markers</button>
+            </div>
+
+            <div id="map"></div>
+
+            <div class="info">
+                <h3>Code Example:</h3>
+                <pre><code>// Initialize the map
+function initMap() {
+    const map = new google.maps.Map(document.getElementById('map'), {
+        center: { lat: 40.7128, lng: -74.0060 },
+        zoom: 13,
+        mapTypeId: 'roadmap'
+    });
+
+    // Add a marker
+    const marker = new google.maps.Marker({
+        position: { lat: 40.7128, lng: -74.0060 },
+        map: map,
+        title: 'New York City'
+    });
+}</code></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let map;
+        let markers = [];
+        let infoWindow;
+        let currentMapType = 'roadmap';
+
+        // NYC locations for demo
+        const nycLocations = [
+            { lat: 40.7580, lng: -73.9855, name: 'Times Square', type: 'attraction' },
+            { lat: 40.7061, lng: -73.9969, name: 'Brooklyn Bridge', type: 'landmark' },
+            { lat: 40.7829, lng: -73.9654, name: 'Central Park', type: 'park' },
+            { lat: 40.7074, lng: -74.0113, name: 'Financial District', type: 'business' },
+            { lat: 40.7071, lng: -73.9903, name: 'Manhattan Bridge', type: 'landmark' }
+        ];
+
+        function updateStatus(message, type = 'loading') {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = message;
+            statusEl.className = `status ${type}`;
+        }
+
+        function initMap() {
+            try {
+                updateStatus('Initializing map...', 'loading');
+
+                // Create map
+                map = new google.maps.Map(document.getElementById('map'), {
+                    center: { lat: 40.7128, lng: -74.0060 },
+                    zoom: 12,
+                    mapTypeId: google.maps.MapTypeId.ROADMAP,
+                    styles: [
+                        {
+                            "featureType": "water",
+                            "elementType": "geometry",
+                            "stylers": [{"color": "#193341"}]
+                        },
+                        {
+                            "featureType": "landscape",
+                            "elementType": "geometry",
+                            "stylers": [{"color": "#2c5234"}]
+                        }
+                    ]
+                });
+
+                // Create info window
+                infoWindow = new google.maps.InfoWindow();
+
+                // Add initial markers
+                nycLocations.forEach((location, index) => {
+                    setTimeout(() => addMarker(location), index * 200);
+                });
+
+                updateStatus('Map loaded successfully! Click markers for more info.', 'success');
+
+            } catch (error) {
+                console.error('Error initializing map:', error);
+                updateStatus('Error initializing map: ' + error.message, 'error');
+            }
+        }
+
+        function addMarker(location) {
+            const marker = new google.maps.Marker({
+                position: { lat: location.lat, lng: location.lng },
+                map: map,
+                title: location.name,
+                animation: google.maps.Animation.DROP,
+                icon: {
+                    path: google.maps.SymbolPath.CIRCLE,
+                    scale: 8,
+                    fillColor: getColorByType(location.type),
+                    fillOpacity: 0.8,
+                    strokeColor: '#ffffff',
+                    strokeWeight: 2
+                }
+            });
+
+            const content = `
+                <div style="padding: 10px; color: #333;">
+                    <h3 style="margin: 0 0 10px 0; color: #1f2937;">${location.name}</h3>
+                    <p style="margin: 0; color: #6b7280;">Type: ${location.type}</p>
+                    <p style="margin: 5px 0 0 0; color: #6b7280;">
+                        Coordinates: ${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}
+                    </p>
+                </div>
+            `;
+
+            marker.addListener('click', () => {
+                infoWindow.setContent(content);
+                infoWindow.open(map, marker);
+            });
+
+            markers.push(marker);
+        }
+
+        function getColorByType(type) {
+            const colors = {
+                'attraction': '#ef4444',
+                'landmark': '#f59e0b',
+                'park': '#10b981',
+                'business': '#3b82f6'
+            };
+            return colors[type] || '#6b7280';
+        }
+
+        function addRandomMarker() {
+            const lat = 40.7128 + (Math.random() - 0.5) * 0.1;
+            const lng = -74.0060 + (Math.random() - 0.5) * 0.1;
+            
+            addMarker({
+                lat: lat,
+                lng: lng,
+                name: `Random Location ${markers.length + 1}`,
+                type: 'custom'
+            });
+        }
+
+        function clearMarkers() {
+            markers.forEach(marker => marker.setMap(null));
+            markers = [];
+            infoWindow.close();
+        }
+
+        function toggleMapType() {
+            currentMapType = currentMapType === 'roadmap' ? 'satellite' : 'roadmap';
+            map.setMapTypeId(currentMapType);
+        }
+
+        function centerOnNYC() {
+            map.setCenter({ lat: 40.7128, lng: -74.0060 });
+            map.setZoom(12);
+        }
+
+        function fitToMarkers() {
+            if (markers.length === 0) return;
+            
+            const bounds = new google.maps.LatLngBounds();
+            markers.forEach(marker => bounds.extend(marker.getPosition()));
+            map.fitBounds(bounds);
+        }
+
+        // Handle API load errors
+        window.gm_authFailure = function() {
+            updateStatus('Google Maps API authentication failed. Please check your API key.', 'error');
+        };
+
+        // Load Google Maps API
+        function loadGoogleMaps() {
+            const script = document.createElement('script');
+            script.src = 'https://maps.googleapis.com/maps/api/js?key=AIzaSyDuSaYOV26dBzQpvWg-F6YF7ySmesPahwM&callback=initMap&libraries=places,geometry';
+            script.async = true;
+            script.defer = true;
+            script.onerror = () => {
+                updateStatus('Failed to load Google Maps API script.', 'error');
+            };
+            document.head.appendChild(script);
+        }
+
+        // Start loading when page is ready
+        document.addEventListener('DOMContentLoaded', loadGoogleMaps);
+    </script>
+</body>
+</html>

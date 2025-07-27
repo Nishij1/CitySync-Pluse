@@ -20,14 +20,11 @@ import {
   TrendingUp,
   Plus
 } from 'lucide-react';
-import MockMapComponent from './MockMapComponent';
+import GoogleMapComponent from './GoogleMapComponent';
 import { IncidentAnalytics } from '../analytics/IncidentAnalytics';
 import { IncidentManager } from '../admin/IncidentManager';
-import {
-  subscribeToIncidents,
-  initializeBengaluruData,
-  IncidentData as FirebaseIncidentData
-} from '../../services/incidentService';
+import { firebaseDataService } from '../../services/firebaseDataService';
+import type { IncidentReport } from '../../services/dataService';
 
 interface MapLayer {
   id: string;
@@ -54,8 +51,8 @@ export function InteractiveMap() {
   
   // Google Maps configuration with your API key
   const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'AIzaSyDuSaYOV26dBzQpvWg-F6YF7ySmesPahwM';
-  const [mapCenter, setMapCenter] = useState({ lat: 12.9716, lng: 77.5946 }); // Bengaluru, India
-  const [mapZoom, setMapZoom] = useState(12);
+  const [mapCenter, setMapCenter] = useState({ lat: 19.0760, lng: 72.8777 }); // Mumbai, India (default city)
+  const [mapZoom, setMapZoom] = useState(11);
   
   const [layers, setLayers] = useState<MapLayer[]>([
     { id: 'traffic', label: 'Traffic Flow', icon: Car, color: 'bg-red-500', visible: true, opacity: 0.8 },
@@ -72,10 +69,10 @@ export function InteractiveMap() {
   const [incidentFilter, setIncidentFilter] = useState<'all' | 'high' | 'medium' | 'low'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [showAnalytics, setShowAnalytics] = useState(false);
-  const [incidents, setIncidents] = useState<FirebaseIncidentData[]>([]);
+  const [incidents, setIncidents] = useState<IncidentReport[]>([]);
   const [isLoadingIncidents, setIsLoadingIncidents] = useState(true);
   const [showIncidentManager, setShowIncidentManager] = useState(false);
-  const [editingIncident, setEditingIncident] = useState<FirebaseIncidentData | null>(null);
+  const [editingIncident, setEditingIncident] = useState<IncidentReport | null>(null);
 
   // Initialize Firebase data and subscribe to real-time updates
   useEffect(() => {
@@ -85,26 +82,16 @@ export function InteractiveMap() {
       try {
         setIsLoadingIncidents(true);
 
-        // Initialize sample data for Bengaluru if needed
-        await initializeBengaluruData();
-
-        // Subscribe to real-time updates
-        unsubscribe = subscribeToIncidents((firebaseIncidents) => {
-          // Convert Firebase incidents to match our interface
-          const convertedIncidents = firebaseIncidents.map(incident => ({
-            id: parseInt(incident.id || '0'),
-            type: incident.type,
-            location: incident.location,
-            coordinates: incident.coordinates,
-            severity: incident.severity,
-            time: incident.time,
-            description: incident.description
-          }));
-
-          setIncidents(firebaseIncidents);
-          setIsLoadingIncidents(false);
-          setLastUpdate(new Date());
-        }, 'Bengaluru');
+        // Subscribe to real-time updates for Mumbai (default city)
+        unsubscribe = firebaseDataService.subscribeToIncidents(
+          'mumbai', // Default to Mumbai
+          (firebaseIncidents: IncidentReport[]) => {
+            console.log('Received incidents from Firebase:', firebaseIncidents.length);
+            setIncidents(firebaseIncidents);
+            setIsLoadingIncidents(false);
+            setLastUpdate(new Date());
+          }
+        );
 
       } catch (error) {
         console.error('Error initializing Firebase data:', error);
@@ -217,15 +204,31 @@ export function InteractiveMap() {
   }, [isLiveMode]);
 
   // Performance optimization: memoize filtered incidents
+  // Convert IncidentReport to IncidentData format for components
+  const convertIncidentForDisplay = (incident: IncidentReport) => ({
+    id: incident.id || '0',
+    type: incident.type,
+    location: incident.location.address,
+    coordinates: [incident.location.coordinates.lat, incident.location.coordinates.lng] as [number, number],
+    severity: incident.severity === 'critical' ? 'high' : incident.severity as 'low' | 'medium' | 'high',
+    time: incident.timestamps.reported.toLocaleString(),
+    description: incident.description,
+    status: incident.status,
+    reportedBy: incident.reporter.name || 'Anonymous'
+  });
+
   const memoizedFilteredIncidents = useMemo(() => {
-    return incidents.filter((incident: FirebaseIncidentData) => {
-      const matchesFilter = incidentFilter === 'all' || incident.severity === incidentFilter;
-      const matchesSearch = searchQuery === '' ||
-        incident.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        incident.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        incident.description.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesFilter && matchesSearch;
-    });
+    return incidents
+      .filter((incident: IncidentReport) => {
+        const severity = incident.severity === 'critical' ? 'high' : incident.severity;
+        const matchesFilter = incidentFilter === 'all' || severity === incidentFilter;
+        const matchesSearch = searchQuery === '' ||
+          incident.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          incident.location.address.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          incident.description.toLowerCase().includes(searchQuery.toLowerCase());
+        return matchesFilter && matchesSearch;
+      })
+      .map(convertIncidentForDisplay);
   }, [incidents, incidentFilter, searchQuery]);
 
   if (isLoadingIncidents) {
@@ -242,15 +245,18 @@ export function InteractiveMap() {
 
   return (
     <div className="h-full relative bg-slate-900 overflow-hidden">
-      {/* Mock Map Container */}
+      {/* Google Maps Container */}
       <div className="absolute inset-0">
-        <MockMapComponent
+        <GoogleMapComponent
           center={mapCenter}
           zoom={mapZoom}
           incidents={memoizedFilteredIncidents}
           layers={layers}
-          onMapLoad={(map) => {
-            console.log('Mock map loaded:', map);
+          onMapLoad={(map: google.maps.Map) => {
+            console.log('Google Maps loaded:', map);
+          }}
+          onIncidentClick={(incident) => {
+            setSelectedIncident(incident);
           }}
         />
       </div>

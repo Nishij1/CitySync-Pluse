@@ -112,7 +112,9 @@ class SpeechService {
       const formData = new FormData();
       formData.append('audio', audioBlob, 'recording.webm');
 
-      const response = await fetch(`${this.baseUrl}/speech-to-text`, {
+      // Temporarily disabled - ElevenLabs doesn't support speech-to-text yet
+      throw new Error('ElevenLabs speech-to-text not available');
+      /*const response = await fetch(`${this.baseUrl}/speech-to-text`, {
         method: 'POST',
         headers: {
           'xi-api-key': this.apiKey,
@@ -135,6 +137,7 @@ class SpeechService {
       console.error('ElevenLabs API not available for speech-to-text:', error);
       throw error;
     }
+    */
   }
 
   // Complete speech-to-text workflow

@@ -1,0 +1,156 @@
+{
+  "rules": {
+    ".read": true,
+    ".write": true,
+    "incidents": {
+      ".indexOn": ["cityId", "type", "severity", "status", "timestamp"],
+      "$incidentId": {
+        ".validate": "newData.hasChildren(['type', 'location', 'coordinates', 'severity', 'description', 'status', 'city'])",
+        "type": {
+          ".validate": "newData.isString() && newData.val().length > 0"
+        },
+        "location": {
+          ".validate": "newData.isString() && newData.val().length > 0"
+        },
+        "coordinates": {
+          ".validate": "newData.hasChildren(['lat', 'lng'])",
+          "lat": {
+            ".validate": "newData.isNumber() && newData.val() >= -90 && newData.val() <= 90"
+          },
+          "lng": {
+            ".validate": "newData.isNumber() && newData.val() >= -180 && newData.val() <= 180"
+          }
+        },
+        "severity": {
+          ".validate": "newData.isString() && (newData.val() == 'low' || newData.val() == 'medium' || newData.val() == 'high')"
+        },
+        "description": {
+          ".validate": "newData.isString() && newData.val().length > 0"
+        },
+        "status": {
+          ".validate": "newData.isString() && (newData.val() == 'active' || newData.val() == 'resolved' || newData.val() == 'investigating')"
+        },
+        "city": {
+          ".validate": "newData.isString() && newData.val().length > 0"
+        },
+        "area": {
+          ".validate": "newData.isString()"
+        },
+        "reportedBy": {
+          ".validate": "newData.isString()"
+        },
+        "timestamp": {
+          ".validate": "newData.isNumber()"
+        },
+        "createdAt": {
+          ".validate": "newData.isNumber()"
+        },
+        "updatedAt": {
+          ".validate": "newData.isNumber()"
+        }
+      }
+    },
+    "cityMetrics": {
+      ".indexOn": ["cityId", "timestamp"],
+      "$metricId": {
+        ".validate": "newData.hasChildren(['cityId', 'timestamp'])",
+        "cityId": {
+          ".validate": "newData.isString() && newData.val().length > 0"
+        },
+        "timestamp": {
+          ".validate": "newData.isNumber()"
+        },
+        "totalIncidents": {
+          ".validate": "newData.isNumber() && newData.val() >= 0"
+        },
+        "activeIncidents": {
+          ".validate": "newData.isNumber() && newData.val() >= 0"
+        },
+        "resolvedIncidents": {
+          ".validate": "newData.isNumber() && newData.val() >= 0"
+        },
+        "averageResponseTime": {
+          ".validate": "newData.isNumber() && newData.val() >= 0"
+        }
+      }
+    },
+    "alerts": {
+      ".indexOn": ["cityId", "isActive", "timestamp"],
+      "$alertId": {
+        ".validate": "newData.hasChildren(['title', 'message', 'type', 'cityId', 'timestamp'])",
+        "title": {
+          ".validate": "newData.isString() && newData.val().length > 0"
+        },
+        "message": {
+          ".validate": "newData.isString() && newData.val().length > 0"
+        },
+        "type": {
+          ".validate": "newData.isString() && (newData.val() == 'info' || newData.val() == 'warning' || newData.val() == 'emergency')"
+        },
+        "cityId": {
+          ".validate": "newData.isString() && newData.val().length > 0"
+        },
+        "timestamp": {
+          ".validate": "newData.isNumber()"
+        },
+        "isActive": {
+          ".validate": "newData.isBoolean()"
+        },
+        "expiresAt": {
+          ".validate": "newData.isNumber()"
+        }
+      }
+    },
+    "users": {
+      ".indexOn": ["email", "role"],
+      "$userId": {
+        ".validate": "newData.hasChildren(['email', 'role'])",
+        "email": {
+          ".validate": "newData.isString() && newData.val().matches(/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}$/i)"
+        },
+        "role": {
+          ".validate": "newData.isString() && (newData.val() == 'admin' || newData.val() == 'user' || newData.val() == 'moderator')"
+        },
+        "displayName": {
+          ".validate": "newData.isString()"
+        },
+        "createdAt": {
+          ".validate": "newData.isNumber()"
+        },
+        "lastLogin": {
+          ".validate": "newData.isNumber()"
+        }
+      }
+    },
+    "cities": {
+      ".indexOn": ["name", "country"],
+      "$cityId": {
+        ".validate": "newData.hasChildren(['name', 'country', 'coordinates'])",
+        "name": {
+          ".validate": "newData.isString() && newData.val().length > 0"
+        },
+        "country": {
+          ".validate": "newData.isString() && newData.val().length > 0"
+        },
+        "coordinates": {
+          ".validate": "newData.hasChildren(['lat', 'lng'])",
+          "lat": {
+            ".validate": "newData.isNumber() && newData.val() >= -90 && newData.val() <= 90"
+          },
+          "lng": {
+            ".validate": "newData.isNumber() && newData.val() >= -180 && newData.val() <= 180"
+          },
+          "zoom": {
+            ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 20"
+          }
+        },
+        "timezone": {
+          ".validate": "newData.isString()"
+        },
+        "language": {
+          ".validate": "newData.isString()"
+        }
+      }
+    }
+  }
+}

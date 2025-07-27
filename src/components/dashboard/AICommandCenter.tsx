@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Brain, Mic, MicOff, Send, Zap, TrendingUp, AlertCircle, Sparkles } from 'lucide-react';
-import { aiService, type AIInsight, type AIResponse } from '@/services/aiService';
-import { speechService, type SpeechToTextResult } from '@/services/speechService';
+import { aiService, type AIInsight, type AIResponse } from '../../services/aiService';
 
 export function AICommandCenter() {
   const [query, setQuery] = useState('');
@@ -53,32 +52,7 @@ export function AICommandCenter() {
   };
 
   const handleVoiceToggle = async () => {
-    if (!speechService.isSupported()) {
-      setSpeechError('Speech recognition is not supported in this browser');
-      return;
-    }
-
-    if (isListening) {
-      return; // Prevent multiple clicks while processing
-    }
-
-    setSpeechError(null);
-    setIsListening(true);
-
-    try {
-      const result = await speechService.recognizeSpeech();
-
-      if (result.text.trim()) {
-        setQuery(result.text.trim());
-      } else {
-        setSpeechError('No speech detected. Please try again.');
-      }
-    } catch (error) {
-      console.error('Speech recognition error:', error);
-      setSpeechError(error instanceof Error ? error.message : 'Failed to recognize speech');
-    } finally {
-      setIsListening(false);
-    }
+    setSpeechError('Speech recognition is not available in this version');
   };
 
   const getSeverityColor = (severity?: string) => {

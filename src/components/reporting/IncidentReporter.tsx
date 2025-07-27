@@ -13,9 +13,8 @@ import {
   AlertTriangle,
   Loader2
 } from 'lucide-react';
-import { dataService, type IncidentReport } from '@/services/dataService';
-import { currentCityConfig } from '@/config/cityConfig';
-import { speechService, type SpeechToTextResult } from '@/services/speechService';
+import { dataService, type IncidentReport } from '../../services/dataService';
+import { currentCityConfig } from '../../config/cityConfig';
 
 interface IncidentReporterProps {
   onReportSubmitted?: (report: IncidentReport) => void;
@@ -86,51 +85,7 @@ export function IncidentReporter({ onReportSubmitted }: IncidentReporterProps) {
   };
 
   const handleVoiceRecord = async () => {
-    if (!speechService.isSupported()) {
-      setSpeechError('Speech recognition is not supported in this browser');
-      return;
-    }
-
-    setSpeechError(null);
-
-    if (!isRecording) {
-      // Start recording
-      try {
-        setIsRecording(true);
-        const result = await speechService.recognizeSpeech();
-
-        // This will resolve when the user stops recording
-        if (result.text.trim()) {
-          const transcribedText = result.text.trim();
-          setVoiceNote(transcribedText);
-
-          // If description is empty, use the voice note as description
-          if (!formData.description.trim()) {
-            setFormData(prev => ({
-              ...prev,
-              description: transcribedText
-            }));
-          } else {
-            // Append to existing description
-            setFormData(prev => ({
-              ...prev,
-              description: prev.description + '\n\nVoice Note: ' + transcribedText
-            }));
-          }
-        } else {
-          setSpeechError('No speech detected. Please try again.');
-        }
-      } catch (error) {
-        console.error('Speech recognition error:', error);
-        setSpeechError(error instanceof Error ? error.message : 'Failed to recognize speech');
-      } finally {
-        setIsRecording(false);
-      }
-    } else {
-      // Stop recording
-      setIsRecording(false);
-      // Speech recognition stops automatically
-    }
+    setSpeechError('Voice recording is not available in this version');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

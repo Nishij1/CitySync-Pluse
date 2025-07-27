@@ -17,6 +17,7 @@ class SpeechService {
   private apiKey: string | null = null;
   private recognition: any = null;
   private isRecognitionActive = false;
+  private baseUrl = 'https://api.elevenlabs.io/v1';
 
   constructor() {
     this.apiKey = process.env.NEXT_PUBLIC_ELEVENLABS_API_KEY || null;

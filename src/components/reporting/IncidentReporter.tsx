@@ -97,7 +97,7 @@ export function IncidentReporter({ onReportSubmitted }: IncidentReporterProps) {
       // Start recording
       try {
         setIsRecording(true);
-        const result = await speechService.startContinuousRecognition();
+        const result = await speechService.recognizeSpeech();
 
         // This will resolve when the user stops recording
         if (result.text.trim()) {
@@ -129,7 +129,7 @@ export function IncidentReporter({ onReportSubmitted }: IncidentReporterProps) {
     } else {
       // Stop recording
       setIsRecording(false);
-      speechService.stopRecognition();
+      // Speech recognition stops automatically
     }
   };
 

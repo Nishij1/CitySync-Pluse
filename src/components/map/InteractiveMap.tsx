@@ -72,7 +72,7 @@ export function InteractiveMap() {
   const [incidents, setIncidents] = useState<IncidentReport[]>([]);
   const [isLoadingIncidents, setIsLoadingIncidents] = useState(true);
   const [showIncidentManager, setShowIncidentManager] = useState(false);
-  const [editingIncident, setEditingIncident] = useState<IncidentReport | null>(null);
+  const [editingIncident, setEditingIncident] = useState<any | null>(null);
 
   // Initialize Firebase data and subscribe to real-time updates
   useEffect(() => {

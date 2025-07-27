@@ -1,48 +1,58 @@
 // Firebase Configuration for CitySync Plus
 // Universal Urban Intelligence Platform
 
-// Temporarily commented out for initial setup
-// import { initializeApp, getApps } from 'firebase/app';
-// import { getAuth } from 'firebase/auth';
-// import { getFirestore } from 'firebase/firestore';
-// import { getStorage } from 'firebase/storage';
-// import { getAnalytics } from 'firebase/analytics';
-// import { getFunctions } from 'firebase/functions';
+import { initializeApp, getApps } from 'firebase/app';
+import { getAuth } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage';
+import { getAnalytics, isSupported } from 'firebase/analytics';
+import { getFunctions } from 'firebase/functions';
 
-// Firebase configuration (temporarily disabled)
+// Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyAsuVzIutbbMb9Hkh3FEHs5F1Nw1D27Auo",
-  authDomain: "citysync-plus.firebaseapp.com",
-  projectId: "citysync-plus",
-  storageBucket: "citysync-plus.firebasestorage.app",
-  messagingSenderId: "863906276094",
-  appId: "1:863906276094:web:9fedf74de34b2abf113baf"
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "AIzaSyAsuVzIutbbMb9Hkh3FEHs5F1Nw1D27Auo",
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "citysync-plus.firebaseapp.com",
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "citysync-plus",
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "citysync-plus.firebasestorage.app",
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "863906276094",
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "1:863906276094:web:9fedf74de34b2abf113baf"
 };
 
-// Temporarily disabled Firebase initialization
-// const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+// Initialize Firebase
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 
-// Mock exports for development
-export const auth = null;
-export const db = null;
-export const storage = null;
-export const functions = null;
-export const analytics = null;
+// Initialize Firebase services
+export const auth = getAuth(app);
+export const db = getFirestore(app);
+export const storage = getStorage(app);
+export const functions = getFunctions(app);
 
-// Firebase app instance (temporarily disabled)
-export default null;
+// Initialize Analytics only in browser environment
+export const analytics = typeof window !== 'undefined' ?
+  (async () => {
+    if (await isSupported()) {
+      return getAnalytics(app);
+    }
+    return null;
+  })() : null;
 
-// Helper functions for Firebase operations (temporarily disabled)
+// Firebase app instance
+export default app;
+
+// Helper functions for Firebase operations
 export const firebaseHelpers = {
   // Check if Firebase is initialized
-  isInitialized: () => false,
+  isInitialized: () => !!app,
 
   // Get current user
-  getCurrentUser: () => null,
+  getCurrentUser: () => auth.currentUser,
 
   // Check if user is authenticated
-  isAuthenticated: () => false,
+  isAuthenticated: () => !!auth.currentUser,
 
   // Get app configuration
-  getConfig: () => firebaseConfig
+  getConfig: () => firebaseConfig,
+
+  // Get app instance
+  getApp: () => app
 };

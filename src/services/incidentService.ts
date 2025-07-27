@@ -1,18 +1,18 @@
-import { 
-  collection, 
-  doc, 
-  getDocs, 
-  addDoc, 
-  updateDoc, 
-  deleteDoc, 
-  onSnapshot, 
-  query, 
-  orderBy, 
-  where, 
+import {
+  collection,
+  doc,
+  getDocs,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  onSnapshot,
+  query,
+  orderBy,
+  where,
   Timestamp,
-  serverTimestamp 
+  serverTimestamp
 } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { db } from '@/config/firebase';
 
 export interface IncidentData {
   id?: string;

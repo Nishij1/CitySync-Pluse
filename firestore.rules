@@ -1,0 +1,30 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Allow read/write access to incidents collection
+    match /incidents/{document} {
+      allow read, write: if true; // For development only
+    }
+    
+    // Allow read/write access to cityMetrics collection
+    match /cityMetrics/{document} {
+      allow read, write: if true; // For development only
+    }
+    
+    // Allow read/write access to alerts collection
+    match /alerts/{document} {
+      allow read, write: if true; // For development only
+    }
+    
+    // Allow read/write access to users collection
+    match /users/{document} {
+      allow read, write: if true; // For development only
+    }
+    
+    // Allow read/write access to cities collection
+    match /cities/{document} {
+      allow read, write: if true; // For development only
+    }
+  }
+}
+    

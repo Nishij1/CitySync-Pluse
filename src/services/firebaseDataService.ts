@@ -1,8 +1,6 @@
 // Firebase Data Service for CitySync Plus
 // Real-time data synchronization with Firebase Firestore
-// TEMPORARILY DISABLED - Firebase not yet configured
 
-/*
 import {
   collection,
   doc,
@@ -21,7 +19,6 @@ import {
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '@/config/firebase';
-*/
 import type { IncidentReport, CityMetrics, AlertNotification } from './dataService';
 
 // Firebase collections
@@ -33,66 +30,15 @@ const COLLECTIONS = {
   CITIES: 'cities'
 } as const;
 
-// Temporarily disabled Firebase service
+// Firebase Data Service Implementation
 class FirebaseDataService {
-  // Mock implementation for development
-  async createIncident(): Promise<any> {
-    throw new Error('Firebase not configured');
-  }
-
-  async getIncidents(): Promise<any[]> {
-    return [];
-  }
-
-  async updateIncidentStatus(): Promise<boolean> {
-    return false;
-  }
-
-  async voteOnIncident(): Promise<boolean> {
-    return false;
-  }
-
-  async saveCityMetrics(): Promise<boolean> {
-    return false;
-  }
-
-  async getLatestCityMetrics(): Promise<any> {
-    return null;
-  }
-
-  async createAlert(): Promise<any> {
-    throw new Error('Firebase not configured');
-  }
-
-  async getActiveAlerts(): Promise<any[]> {
-    return [];
-  }
-
-  async uploadFile(): Promise<string> {
-    throw new Error('Firebase not configured');
-  }
-
-  subscribeToIncidents(): () => void {
-    return () => {};
-  }
-
-  subscribeToAlerts(): () => void {
-    return () => {};
-  }
-
-  async checkConnection(): Promise<boolean> {
-    return false;
-  }
-}
-
-/*
-// Original Firebase implementation - will be restored when Firebase is configured
-class FirebaseDataService {
-// Rest of the Firebase implementation commented out for now
-/*
   // Incident Management
   async createIncident(incident: Omit<IncidentReport, 'id' | 'timestamps'>): Promise<IncidentReport> {
     try {
+      if (!db) {
+        throw new Error('Firebase not initialized');
+      }
+
       const incidentData = {
         ...incident,
         timestamps: {
@@ -106,7 +52,7 @@ class FirebaseDataService {
       };
 
       const docRef = await addDoc(collection(db, COLLECTIONS.INCIDENTS), incidentData);
-      
+
       // Return the created incident with the generated ID
       const newIncident: IncidentReport = {
         ...incident,
@@ -126,32 +72,20 @@ class FirebaseDataService {
     }
   }
 
-  async getIncidents(cityId: string, filters?: {
-    type?: string;
-    severity?: string;
-    status?: string;
-    district?: string;
-    limit?: number;
-  }): Promise<IncidentReport[]> {
+  async getIncidents(cityId?: string): Promise<IncidentReport[]> {
     try {
+      if (!db) {
+        throw new Error('Firebase not initialized');
+      }
+
       let q = query(
         collection(db, COLLECTIONS.INCIDENTS),
-        where('cityId', '==', cityId),
-        orderBy('timestamps.reported', 'desc')
+        orderBy('timestamps.reported', 'desc'),
+        limit(50)
       );
 
-      // Apply filters
-      if (filters?.type) {
-        q = query(q, where('type', '==', filters.type));
-      }
-      if (filters?.severity) {
-        q = query(q, where('severity', '==', filters.severity));
-      }
-      if (filters?.status) {
-        q = query(q, where('status', '==', filters.status));
-      }
-      if (filters?.limit) {
-        q = query(q, limit(filters.limit));
+      if (cityId) {
+        q = query(q, where('cityId', '==', cityId));
       }
 
       const querySnapshot = await getDocs(q);
@@ -163,36 +97,32 @@ class FirebaseDataService {
           id: doc.id,
           ...data,
           timestamps: {
-            reported: data.timestamps.reported?.toDate() || new Date(),
-            verified: data.timestamps.verified?.toDate(),
-            resolved: data.timestamps.resolved?.toDate()
+            reported: data.timestamps?.reported?.toDate() || new Date(),
+            verified: data.timestamps?.verified?.toDate(),
+            resolved: data.timestamps?.resolved?.toDate()
           }
         } as IncidentReport);
       });
 
       return incidents;
     } catch (error) {
-      console.error('Error fetching incidents:', error);
+      console.error('Error getting incidents:', error);
       return [];
     }
   }
 
-  async updateIncidentStatus(incidentId: string, status: IncidentReport['status']): Promise<boolean> {
+  async updateIncidentStatus(incidentId: string, status: string): Promise<boolean> {
     try {
-      const incidentRef = doc(db, COLLECTIONS.INCIDENTS, incidentId);
-      const updateData: any = {
-        status,
-        updatedAt: serverTimestamp()
-      };
-
-      // Set timestamp based on status
-      if (status === 'verified') {
-        updateData['timestamps.verified'] = serverTimestamp();
-      } else if (status === 'resolved') {
-        updateData['timestamps.resolved'] = serverTimestamp();
+      if (!db) {
+        throw new Error('Firebase not initialized');
       }
 
-      await updateDoc(incidentRef, updateData);
+      const incidentRef = doc(db, COLLECTIONS.INCIDENTS, incidentId);
+      await updateDoc(incidentRef, {
+        status,
+        updatedAt: serverTimestamp()
+      });
+
       return true;
     } catch (error) {
       console.error('Error updating incident status:', error);
@@ -200,26 +130,27 @@ class FirebaseDataService {
     }
   }
 
-  async voteOnIncident(incidentId: string, vote: 'up' | 'down', userId: string): Promise<boolean> {
+  async voteOnIncident(incidentId: string, voteType: 'upvote' | 'downvote'): Promise<boolean> {
     try {
+      if (!db) {
+        throw new Error('Firebase not initialized');
+      }
+
       const incidentRef = doc(db, COLLECTIONS.INCIDENTS, incidentId);
       const incidentDoc = await getDoc(incidentRef);
-      
+
       if (!incidentDoc.exists()) {
-        return false;
+        throw new Error('Incident not found');
       }
 
-      const data = incidentDoc.data();
-      const currentVotes = data.votes || { upvotes: 0, downvotes: 0 };
-
-      if (vote === 'up') {
-        currentVotes.upvotes += 1;
-      } else {
-        currentVotes.downvotes += 1;
-      }
+      const currentVotes = incidentDoc.data().votes || { upvotes: 0, downvotes: 0 };
+      const newVotes = {
+        upvotes: voteType === 'upvote' ? currentVotes.upvotes + 1 : currentVotes.upvotes,
+        downvotes: voteType === 'downvote' ? currentVotes.downvotes + 1 : currentVotes.downvotes
+      };
 
       await updateDoc(incidentRef, {
-        votes: currentVotes,
+        votes: newVotes,
         updatedAt: serverTimestamp()
       });
 
@@ -230,13 +161,15 @@ class FirebaseDataService {
     }
   }
 
-  // City Metrics Management
   async saveCityMetrics(metrics: Omit<CityMetrics, 'timestamp'>): Promise<boolean> {
     try {
+      if (!db) {
+        throw new Error('Firebase not initialized');
+      }
+
       const metricsData = {
         ...metrics,
-        timestamp: serverTimestamp(),
-        createdAt: serverTimestamp()
+        timestamp: serverTimestamp()
       };
 
       await addDoc(collection(db, COLLECTIONS.METRICS), metricsData);
@@ -249,6 +182,10 @@ class FirebaseDataService {
 
   async getLatestCityMetrics(cityId: string): Promise<CityMetrics | null> {
     try {
+      if (!db) {
+        throw new Error('Firebase not initialized');
+      }
+
       const q = query(
         collection(db, COLLECTIONS.METRICS),
         where('cityId', '==', cityId),
@@ -257,35 +194,70 @@ class FirebaseDataService {
       );
 
       const querySnapshot = await getDocs(q);
-      
+
       if (querySnapshot.empty) {
         return null;
       }
 
       const doc = querySnapshot.docs[0];
       const data = doc.data();
-      
-      return {
-        ...data,
-        timestamp: data.timestamp?.toDate() || new Date()
-      } as CityMetrics;
+
+      // Create a properly typed CityMetrics object with defaults
+      const metrics: CityMetrics = {
+        cityId: data.cityId || cityId,
+        timestamp: data.timestamp?.toDate() || new Date(),
+        traffic: data.traffic || {
+          averageSpeed: 0,
+          congestionLevel: 0,
+          incidents: 0
+        },
+        infrastructure: data.infrastructure || {
+          activeIssues: 0,
+          maintenanceScheduled: 0,
+          systemHealth: 100
+        },
+        safety: data.safety || {
+          emergencyResponses: 0,
+          averageResponseTime: 0,
+          safetyScore: 100
+        },
+        environment: data.environment || {
+          airQuality: 50,
+          noiseLevel: 30,
+          weatherConditions: 'Clear'
+        },
+        utilities: data.utilities || {
+          powerOutages: 0,
+          waterIssues: 0,
+          internetConnectivity: 100
+        },
+        citizenEngagement: data.citizenEngagement || {
+          activeReports: 0,
+          verifiedReporters: 0,
+          satisfactionScore: 80
+        }
+      };
+
+      return metrics;
     } catch (error) {
-      console.error('Error fetching city metrics:', error);
+      console.error('Error getting latest city metrics:', error);
       return null;
     }
   }
 
-  // Alert Management
   async createAlert(alert: Omit<AlertNotification, 'id' | 'createdAt'>): Promise<AlertNotification> {
     try {
+      if (!db) {
+        throw new Error('Firebase not initialized');
+      }
+
       const alertData = {
         ...alert,
-        createdAt: serverTimestamp(),
-        expiresAt: alert.expiresAt ? Timestamp.fromDate(alert.expiresAt) : null
+        createdAt: serverTimestamp()
       };
 
       const docRef = await addDoc(collection(db, COLLECTIONS.ALERTS), alertData);
-      
+
       return {
         ...alert,
         id: docRef.id,
@@ -297,16 +269,20 @@ class FirebaseDataService {
     }
   }
 
-  async getActiveAlerts(cityId: string): Promise<AlertNotification[]> {
+  async getActiveAlerts(cityId?: string): Promise<AlertNotification[]> {
     try {
-      const now = Timestamp.now();
-      const q = query(
+      if (!db) {
+        throw new Error('Firebase not initialized');
+      }
+
+      let q = query(
         collection(db, COLLECTIONS.ALERTS),
-        where('cityId', '==', cityId),
-        where('expiresAt', '>', now),
-        orderBy('expiresAt'),
         orderBy('createdAt', 'desc')
       );
+
+      if (cityId) {
+        q = query(q, where('cityId', '==', cityId));
+      }
 
       const querySnapshot = await getDocs(q);
       const alerts: AlertNotification[] = [];
@@ -323,17 +299,21 @@ class FirebaseDataService {
 
       return alerts;
     } catch (error) {
-      console.error('Error fetching active alerts:', error);
+      console.error('Error getting active alerts:', error);
       return [];
     }
   }
 
-  // File Upload (for incident media)
   async uploadFile(file: File, path: string): Promise<string> {
     try {
-      const storageRef = ref(storage, path);
-      const snapshot = await uploadBytes(storageRef, file);
+      if (!storage) {
+        throw new Error('Firebase Storage not initialized');
+      }
+
+      const fileRef = ref(storage, path);
+      const snapshot = await uploadBytes(fileRef, file);
       const downloadURL = await getDownloadURL(snapshot.ref);
+
       return downloadURL;
     } catch (error) {
       console.error('Error uploading file:', error);
@@ -341,103 +321,108 @@ class FirebaseDataService {
     }
   }
 
-  // Real-time subscriptions
   subscribeToIncidents(
-    cityId: string, 
+    cityId: string,
     callback: (incidents: IncidentReport[]) => void,
     filters?: { type?: string; severity?: string; status?: string }
   ): () => void {
-    let q = query(
-      collection(db, COLLECTIONS.INCIDENTS),
-      where('cityId', '==', cityId),
-      orderBy('timestamps.reported', 'desc'),
-      limit(50)
-    );
-
-    // Apply filters
-    if (filters?.type) {
-      q = query(q, where('type', '==', filters.type));
-    }
-    if (filters?.severity) {
-      q = query(q, where('severity', '==', filters.severity));
-    }
-    if (filters?.status) {
-      q = query(q, where('status', '==', filters.status));
+    if (!db) {
+      console.error('Firebase not initialized');
+      return () => {};
     }
 
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const incidents: IncidentReport[] = [];
-      
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        incidents.push({
-          id: doc.id,
-          ...data,
-          timestamps: {
-            reported: data.timestamps.reported?.toDate() || new Date(),
-            verified: data.timestamps.verified?.toDate(),
-            resolved: data.timestamps.resolved?.toDate()
-          }
-        } as IncidentReport);
+    try {
+      let q = query(
+        collection(db, COLLECTIONS.INCIDENTS),
+        where('cityId', '==', cityId),
+        orderBy('timestamps.reported', 'desc'),
+        limit(50)
+      );
+
+      // Apply filters
+      if (filters?.type) {
+        q = query(q, where('type', '==', filters.type));
+      }
+      if (filters?.severity) {
+        q = query(q, where('severity', '==', filters.severity));
+      }
+      if (filters?.status) {
+        q = query(q, where('status', '==', filters.status));
+      }
+
+      return onSnapshot(q, (querySnapshot) => {
+        const incidents: IncidentReport[] = [];
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          incidents.push({
+            id: doc.id,
+            ...data,
+            timestamps: {
+              reported: data.timestamps?.reported?.toDate() || new Date(),
+              verified: data.timestamps?.verified?.toDate(),
+              resolved: data.timestamps?.resolved?.toDate()
+            }
+          } as IncidentReport);
+        });
+        callback(incidents);
       });
-
-      callback(incidents);
-    }, (error) => {
-      console.error('Error in incidents subscription:', error);
-    });
-
-    return unsubscribe;
+    } catch (error) {
+      console.error('Error subscribing to incidents:', error);
+      return () => {};
+    }
   }
 
   subscribeToAlerts(
     cityId: string,
     callback: (alerts: AlertNotification[]) => void
   ): () => void {
-    const now = Timestamp.now();
-    const q = query(
-      collection(db, COLLECTIONS.ALERTS),
-      where('cityId', '==', cityId),
-      where('expiresAt', '>', now),
-      orderBy('expiresAt'),
-      orderBy('createdAt', 'desc')
-    );
+    if (!db) {
+      console.error('Firebase not initialized');
+      return () => {};
+    }
 
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const alerts: AlertNotification[] = [];
-      
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        alerts.push({
-          id: doc.id,
-          ...data,
-          createdAt: data.createdAt?.toDate() || new Date(),
-          expiresAt: data.expiresAt?.toDate()
-        } as AlertNotification);
+    try {
+      const q = query(
+        collection(db, COLLECTIONS.ALERTS),
+        where('cityId', '==', cityId),
+        orderBy('createdAt', 'desc')
+      );
+
+      return onSnapshot(q, (querySnapshot) => {
+        const alerts: AlertNotification[] = [];
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          alerts.push({
+            id: doc.id,
+            ...data,
+            createdAt: data.createdAt?.toDate() || new Date(),
+            expiresAt: data.expiresAt?.toDate()
+          } as AlertNotification);
+        });
+        callback(alerts);
       });
-
-      callback(alerts);
-    }, (error) => {
-      console.error('Error in alerts subscription:', error);
-    });
-
-    return unsubscribe;
+    } catch (error) {
+      console.error('Error subscribing to alerts:', error);
+      return () => {};
+    }
   }
 
-  // Utility methods
   async checkConnection(): Promise<boolean> {
     try {
+      if (!db) {
+        return false;
+      }
+
       // Try to read from a collection to test connection
-      const q = query(collection(db, COLLECTIONS.CITIES), limit(1));
-      await getDocs(q);
+      const testQuery = query(collection(db, COLLECTIONS.INCIDENTS), limit(1));
+      await getDocs(testQuery);
       return true;
     } catch (error) {
-      console.error('Firebase connection error:', error);
+      console.error('Firebase connection test failed:', error);
       return false;
     }
   }
 }
-
-*/
 
 // Export singleton instance
 export const firebaseDataService = new FirebaseDataService();

@@ -1,0 +1,29 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Allow read/write access to all files for development
+    match /{allPaths=**} {
+      allow read, write: if true; // For development only
+    }
+    
+    // More specific rules for incident images
+    match /incidents/{incidentId}/{fileName} {
+      allow read: if true;
+      allow write: if request.resource.size < 5 * 1024 * 1024 // 5MB limit
+                   && request.resource.contentType.matches('image/.*');
+    }
+    
+    // User profile images
+    match /users/{userId}/profile/{fileName} {
+      allow read: if true;
+      allow write: if request.resource.size < 2 * 1024 * 1024 // 2MB limit
+                   && request.resource.contentType.matches('image/.*');
+    }
+    
+    // City assets
+    match /cities/{cityId}/{fileName} {
+      allow read: if true;
+      allow write: if request.resource.size < 10 * 1024 * 1024; // 10MB limit
+    }
+  }
+}

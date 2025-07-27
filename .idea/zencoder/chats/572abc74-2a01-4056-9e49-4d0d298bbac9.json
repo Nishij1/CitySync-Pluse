@@ -1,0 +1,97 @@
+{
+    "checksum": "a6f3f7e5a50106f65d67d7b322f3b2fd305b410df9e04ba3e7353681713120fb",
+    "data": {
+    "id": "572abc74-2a01-4056-9e49-4d0d298bbac9",
+    "createdAt": 1753590596226,
+    "updatedAt": 1753590601216,
+    "title": "Chatbot Configuration Update",
+    "messages": [
+        {
+            "id": "fe357c3e-ee04-4e34-8913-eb79c10235a8",
+            "role": "user",
+            "content": [
+                {
+                    "type": "text",
+                    "text": "In the charbot use AIzaSyCGT4aHNlF-FHheuhh2EG-cnSrg4MhDq9s this key insetad and the model is gemini-2.0-flash"
+                }
+            ],
+            "context": {
+                "codebaseEnabled": true,
+                "ragFiles": [
+                    {
+                        "path": "src/components/map/InteractiveMap.tsx",
+                        "fsPath": "C:\\Users\\HP\\Desktop\\My Folder\\Agentic Ai\\src\\components\\map\\InteractiveMap.tsx",
+                        "sources": [
+                            "keyword_search"
+                        ]
+                    },
+                    {
+                        "path": "src/components/auth/UserDashboard.tsx",
+                        "fsPath": "C:\\Users\\HP\\Desktop\\My Folder\\Agentic Ai\\src\\components\\auth\\UserDashboard.tsx",
+                        "sources": [
+                            "keyword_search"
+                        ]
+                    }
+                ],
+                "rerankedFiles": [],
+                "usedFilePaths": []
+            },
+            "createdAt": 1753590596240,
+            "isInternal": false,
+            "rawContent": {
+                "type": "doc",
+                "content": [
+                    {
+                        "type": "paragraph",
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": "In the charbot use AIzaSyCGT4aHNlF-FHheuhh2EG-cnSrg4MhDq9s this key insetad and the model is gemini-2.0-flash"
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "id": "1c4c5feb-d0c6-40de-92c9-24d89d34d11f",
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "text",
+                    "text": "It seems like you're trying to update the API key and model for a chatbot application. Here's how you can do it in a TypeScript project:\n\n1. **Locate the Configuration File**: Find the file where the API key and model are configured. This is often a configuration file or a part of the code where the API client is initialized.\n\n2. **Update the API Key**: Replace the existing API key with the new one (`AIzaSyCGT4aHNlF-FHheuhh2EG-cnSrg4MhDq9s`).\n\n3. **Update the Model**: Change the model to `gemini-2.0-flash`.\n\nHere's an example of how this might look in a TypeScript file:\n\n```typescript\n// Assuming you have a configuration object or function\nconst chatbotConfig = {\n  apiKey: 'AIzaSyCGT4aHNlF-FHheuhh2EG-cnSrg4MhDq9s',\n  model: 'gemini-2.0-flash',\n  // other configurations...\n};\n\n// Example of initializing the chatbot client\nconst chatbotClient = new ChatbotClient(chatbotConfig);\n\n// Now you can use chatbotClient to interact with the chatbot\n```\n\nMake sure to replace the placeholders with the actual variable names and structure used in your project. If you need further assistance, please provide more details about how your chatbot is set up."
+                }
+            ],
+            "context": {
+                "codebaseEnabled": true,
+                "ragFiles": [
+                    {
+                        "path": "src/components/map/InteractiveMap.tsx",
+                        "fsPath": "C:\\Users\\HP\\Desktop\\My Folder\\Agentic Ai\\src\\components\\map\\InteractiveMap.tsx",
+                        "sources": [
+                            "keyword_search"
+                        ]
+                    },
+                    {
+                        "path": "src/components/auth/UserDashboard.tsx",
+                        "fsPath": "C:\\Users\\HP\\Desktop\\My Folder\\Agentic Ai\\src\\components\\auth\\UserDashboard.tsx",
+                        "sources": [
+                            "keyword_search"
+                        ]
+                    }
+                ],
+                "rerankedFiles": [],
+                "usedFilePaths": []
+            },
+            "createdAt": 1753590601216,
+            "isInternal": false
+        }
+    ],
+    "isAgent": false,
+    "isNameGenerated": true,
+    "isCustomAgent": false,
+    "isUnitTestsAgent": false,
+    "isE2EAgent": false,
+    "autoApply": false
+}
+}

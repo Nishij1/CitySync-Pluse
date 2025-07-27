@@ -148,12 +148,11 @@ class AIService {
     }
 
     try {
-      // Real Gemini AI integration would go here
-      const response = await fetch(`${this.baseUrl}/models/gemini-pro:generateContent`, {
+      // Real Gemini AI integration with gemini-2.0-flash model
+      const response = await fetch(`${this.baseUrl}/models/gemini-2.0-flash:generateContent?key=${this.apiKey}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.apiKey}`
         },
         body: JSON.stringify({
           contents: [{
@@ -169,10 +168,10 @@ class AIService {
       }
 
       const data = await response.json();
-      
+
       // Process the real API response here
       return {
-        response: data.candidates[0]?.content?.parts[0]?.text || 'Unable to process query',
+        response: data.candidates?.[0]?.content?.parts?.[0]?.text || 'Unable to process query',
         insights: this.generateMockInsights(), // Would be extracted from AI response
         suggestions: [], // Would be extracted from AI response
         confidence: 85

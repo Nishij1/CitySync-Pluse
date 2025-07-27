@@ -152,10 +152,10 @@ export function LandingPage({ onLogin, onLogout }: LandingPageProps) {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-6">
-            <a href="#features" className="text-slate-300 hover:text-white transition-colors hover:scale-105">Features</a>
-            <a href="#about" className="text-slate-300 hover:text-white transition-colors hover:scale-105">About</a>
-            <a href="#testimonials" className="text-slate-300 hover:text-white transition-colors hover:scale-105">Testimonials</a>
-            <a href="#contact" className="text-slate-300 hover:text-white transition-colors hover:scale-105">Contact</a>
+            <a href="#features" className="text-blue-500 hover:text-white transition-colors hover:scale-105">Features</a>
+            <a href="#about" className="text-blue-500 hover:text-white transition-colors hover:scale-105">About</a>
+            <a href="#testimonials" className="text-blue-500 hover:text-white transition-colors hover:scale-105">Testimonials</a>
+            <a href="#contact" className="text-blue-500 hover:text-white transition-colors hover:scale-105">Contact</a>
             {onLogout ? (
               <button
                 onClick={onLogout}
